@@ -1,1 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NXR / TAP PROTOCOL</title>
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        body { background-color: #050b14; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding-bottom: 70px; }
+        
+        /* Top Protocol Header */
+        .header { text-align: center; margin-top: 25px; }
+        .protocol-title { font-size: 11px; letter-spacing: 3px; color: #4da3ff; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; opacity: 0.8; }
+        .subtitle { font-size: 24px; font-weight: 600; margin-bottom: 20px; }
+        
+        /* Balance Display */
+        .balance-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px; }
+        .coin-icon { font-size: 32px; color: #4da3ff; filter: drop-shadow(0 0 8px #4da3ff); }
+        .balance { font-size: 54px; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .currency-label { font-size: 11px; letter-spacing: 1.5px; color: #708090; font-weight: bold; margin-left: 5px; align-self: flex-end; padding-bottom: 12px; }
+
+        /* Main Tap Button Area */
+        .tap-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+        .outer-ring { width: 280px; height: 280px; border-radius: 50%; border: 2px solid rgba(77, 163, 255, 0.2); display: flex; align-items: center; justify-content: center; position: relative; }
+        .inner-ring { width: 250px; height: 250px; border-radius: 50%; border: 1px solid rgba(77, 163, 255, 0.4); display: flex; align-items: center; justify-content: center; }
+        .tap-button { width: 230px; height: 230px; border-radius: 50%; background: radial-gradient(circle, #102542 0%, #071324 100%); border: 2px solid #1a365d; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.05s ease; box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 40px rgba(16, 37, 66, 0.8); position: relative; }
+        .tap-button:active { transform: scale(0.96); border-color: #4da3ff; box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 50px rgba(77, 163, 255, 0.4); }
+        .tap-text { font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #ffffff; margin-bottom: 6px; }
+        .tap-value { font-size: 12px; color: #4da3ff; letter-spacing: 1px; font-weight: 500; opacity: 0.9; }
+
+        /* Floating +3 Text Animation Container */
+        .floating-text { position: absolute; color: #4da3ff; font-size: 26px; font-weight: bold; pointer-events: none; animation: floatUp 0.6s ease-out forwards; text-shadow: 0 0 8px rgba(77,163,255,0.6); z-index: 10; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(0.8); } }
+
+        /* Energy Tracker Stats */
+        .energy-section { padding: 0 30px; margin-bottom: 25px; }
+        .energy-status { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+        .energy-label { color: #708090; text-transform: uppercase; }
+        .energy-value { font-variant-numeric: tabular-nums; }
+        
+        /* Energy Progress Bar Container */
+        .progress-container { width: 100%; height: 12px; background-color: #0b1524; border-radius: 6px; padding: 2px; border: 1px solid #142238; }
+        .progress-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #3b42c4 0%, #4da3ff 100%); border-radius: 4px; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(77,163,255,0.4); }
+
+        /* Navigation Bar Footer */
+        .navbar { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: linear-gradient(to top, #03070d 0%, #07111f 100%); border-top: 1px solid #12223a; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #52637a; text-decoration: none; font-size: 9px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; flex: 1; height: 100%; justify-content: center; }
+        .nav-item.active { color: #4da3ff; }
+        .nav-icon { font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <div class="header">
+        <div class="protocol-title">NXR / TAP PROTOCOL</div>
+        <div class="subtitle">Build your energy.</div>
+    </div>
+
+    <!-- Balance Counter -->
+    <div class="balance-container">
+        <span class="coin-icon">✦</span>
+        <span class="balance" id="coinsDisplay">0</span>
+        <span class="currency-label">GAME COINS</span>
+    </div>
+
+    <!-- Clicker Interaction Area -->
+    <div class="tap-area">
+        <div class="outer-ring">
+            <div class="inner-ring">
+                <div class="tap-button" id="clickTarget">
+                    <span class="tap-text">TAP</span>
+                    <span class="tap-value">+3 COINS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Energy Progress Tracking -->
+    <div class="energy-section">
+        <div class="energy-status">
+            <span class="energy-label">ENERGY</span>
+            <span class="energy-value"><span id="energyDisplay">1200</span>/1200</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="energyBar"></div>
+        </div>
+    </div>
+
+    <!-- Core App Navigation Menu -->
+    <div class="navbar">
+        <a href="#" class="nav-item active"><span class="nav-icon">🏠</span>HOME</a>
+        <a href="#" class="nav-item"><span class="nav-icon">⚡</span>UPGRADE</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🎁</span>TASKS</a>
+        <a href="#" class="nav-item"><span class="nav-icon">👥</span>FRIENDS</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🏆</span>RANK</a>
+    </div>
+
+    <!-- Main Game Script Operations -->
+    <script>
+        const tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.ready();
+        }
+
+        // Logic parameters
+        let coins = 0;
+        let energy = 1200;
+        const maxEnergy = 1200;
+        const earnPerTap = 3;
+
+        // Elements
+        const coinsDisplay = document.getElementById('coinsDisplay');
+        const energyDisplay = document.getElementById('energyDisplay');
+        const energyBar = document.getElementById('energyBar');
+        const clickTarget = document.getElementById('clickTarget');
+
+        // Tap event trigger
+        clickTarget.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Stop double-tap zoom behavior on phone screens
+            
+            // Multiple finger tap tracking loop
+            for (let i = 0; i < e.touches.length; i++) {
+                if (energy >= earnPerTap) {
+                    coins += earnPerTap;
+                    energy -= earnPerTap;
+                    
+                    // UI refresh updates
+                    coinsDisplay.innerText = coins.toLocaleString();
+                    energyDisplay.innerText = energy;
+                    energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
+                    
+                    // Run text coordinate animations
+                    createFloatingText(e.touches[i].clientX, e.touches[i].clientY);
+                    
+                    // Run phone physical vibrations
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.impactOccurred('medium');
+                    }
+                }
+            }
+        });
+
+        // Click alternative backup for computer layout tests
+        clickTarget.addEventListener('click', (e) => {
+            if (e.pointerType !== 'touch' && energy >= earnPerTap) {
+                coins += earnPerTap;
+                energy -= earnPerTap;
+                coinsDisplay.innerText = coins.toLocaleString();
+                energyDisplay.innerText = energy;
+                energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
+                createFloatingText(e.clientX, e.clientY);
+            }
+        });
+
+        // Floating dynamic +3 coin popups function
+        function createFloatingText(x, y) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = `+${earnPerTap}`;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            document.body.appendChild(el);
+            
+            setTimeout(() => el.remove(), 600);
+        }
+
+        // Energy automatic recovery cycle tick (recovers +3 every 1 second)
+        setInterval(() => {
+            if (energy < maxEnergy) {
+                energy = Math.min(maxEnergy, energy + 3);
+                energyDisplay.innerText = energy;
+                energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
 
