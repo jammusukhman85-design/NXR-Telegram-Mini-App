@@ -6,7 +6,7 @@
     <title>NXR / PROTOCOL NODE</title>
     <script src="https://telegram.org"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
         body { background-color: #030812; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding-bottom: 75px; }
         
         /* Top Navigation Header Bar */
@@ -28,11 +28,7 @@
         .panes-container { flex-grow: 1; width: 100%; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .game-pane { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; padding: 10px 20px; }
         
-        /* FORCE CORE PANE TO EXCLUSIVELY SHOW */
-        #pane-core.active-pane { display: flex !important; }
-        #pane-upgrade.active-pane { display: flex !important; }
-        #pane-tasks.active-pane { display: flex !important; }
-        #pane-friends.active-pane { display: flex !important; }
+        .game-pane.active-pane { display: flex !important; }
 
         /* --- CORE TAP PAGE STYLES --- */
         .interaction-vault { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px; }
@@ -126,4 +122,8 @@
                     <div class="up-profit">+1/sec profit</div>
                     <div class="up-divider"></div>
                     <div class="up-footer">
-                        
+                        <span class="up-cost"><span id="cost-cpu">50</span> ✦</span>
+                        <span class="up-lvl">Lvl <span id="lvl-cpu">0</span></span>
+                    </div>
+                </div>
+                
