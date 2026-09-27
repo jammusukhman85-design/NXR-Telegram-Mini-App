@@ -5,133 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NXR / PROTOCOL NODE</title>
     <script src="https://telegram.org"></script>
-    <script src="https://jsdelivr.net"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body { background-color: #030812; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding-bottom: 75px; }
+        
+        /* Top Navigation Header Bar */
         .header-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: linear-gradient(180deg, rgba(16, 37, 66, 0.4) 0%, rgba(3, 8, 18, 0) 100%); }
         .user-pill { display: flex; align-items: center; gap: 8px; background: rgba(77, 163, 255, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(77, 163, 255, 0.2); font-size: 12px; font-weight: 600; color: #4da3ff; }
-        .node-status { font-size: 10px; letter-spacing: 1px; color: #ffaa00; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
-        .node-status::before { content: ''; display: inline-block; width: 6px; height: 6px; background-color: #ffaa00; border-radius: 50%; box-shadow: 0 0 8px #ffaa00; }
+        .node-status { font-size: 10px; letter-spacing: 1px; color: #00ff88; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+        .node-status::before { content: ''; display: inline-block; width: 6px; height: 6px; background-color: #00ff88; border-radius: 50%; }
+
+        /* Metrics Tracker Dashboard */
         .dashboard { text-align: center; margin-top: 10px; }
         .brand-title { font-size: 11px; letter-spacing: 4px; color: #4da3ff; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
-        .balance-box { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px 0; }
+        .piph-box { font-size: 12px; color: #8fa0b5; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; gap: 4px; }
+        .piph-val { color: #00ff88; font-weight: bold; }
+        .balance-box { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; }
         .token-symbol { font-size: 36px; color: #00ffff; text-shadow: 0 0 12px rgba(0,255,255,0.6); font-weight: bold; }
         .balance-value { font-size: 48px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+        
+        /* Game Page Panes */
+        .game-pane { display: none; flex-grow: 1; flex-direction: column; overflow-y: auto; padding: 10px 20px; width: 100%; height: 100%; }
+        .game-pane.active-pane { display: flex; }
+
+        /* --- CORE TAP PAGE STYLES --- */
         .interaction-vault { flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-        .energy-field-outer { width: 290px; height: 290px; border-radius: 50%; background: radial-gradient(circle, rgba(16,37,66,0.2) 0%, rgba(0,0,0,0) 70%); display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(77, 163, 255, 0.15); }
-        .node-core-btn { width: 230px; height: 230px; border-radius: 50%; background: radial-gradient(circle, #0c1f38 0%, #040d1a 100%); border: 3px solid #16325c; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.05s ease; box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 50px rgba(12, 31, 56, 0.9); }
+        .energy-field-outer { width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(16,37,66,0.2) 0%, rgba(0,0,0,0) 70%); display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(77, 163, 255, 0.15); position: relative; }
+        
+        /* FLOATING ENERGY BADGE OVER BUTTON */
+        .energy-popup-badge { position: absolute; top: -15px; background: #07152c; border: 1px solid #4da3ff; color: #ffffff; padding: 4px 14px; border-radius: 12px; font-size: 11px; font-weight: bold; letter-spacing: 1px; box-shadow: 0 0 15px rgba(77, 163, 255, 0.4); font-variant-numeric: tabular-nums; z-index: 50; }
+        
+        .node-core-btn { width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, #0c1f38 0%, #040d1a 100%); border: 3px solid #16325c; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.05s ease; box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 50px rgba(12, 31, 56, 0.9); }
         .node-core-btn:active { transform: scale(0.95); border-color: #00ffff; }
         .core-text { font-size: 32px; font-weight: 900; letter-spacing: 5px; color: #ffffff; }
         .core-subtext { font-size: 11px; color: #00ffff; letter-spacing: 1.5px; font-weight: 600; margin-top: 5px; }
+
         .click-burst { position: absolute; color: #00ffff; font-size: 28px; font-weight: 900; pointer-events: none; animation: popExplode 0.5s ease-out forwards; text-shadow: 0 0 10px rgba(0,255,255,0.8); z-index: 999; }
         @keyframes popExplode { 0% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-120px) scale(0.8); } }
-        .capacitance-box { padding: 0 30px; margin-bottom: 20px; width: 100%; }
-        .capacitance-status { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 11px; font-weight: 700; }
-        .cap-label { color: #52637a; text-transform: uppercase; }
-        .cap-metrics { font-variant-numeric: tabular-nums; color: #ffffff; }
-        .cap-track { width: 100%; height: 10px; background-color: #071121; border-radius: 5px; padding: 2px; border: 1px solid #11223b; overflow: hidden; }
-        .cap-fluid { height: 100%; width: 100%; background: linear-gradient(90deg, #0055ff 0%, #00ffff 100%); border-radius: 3px; }
+
+        /* --- UPGRADES CARD STYLES --- */
+        .section-header { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #4da3ff; }
+        .upgrades-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
+        .up-card { background: #091324; border: 1px solid #142847; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+        .up-name { font-size: 13px; font-weight: bold; color: #ffffff; }
+        .up-profit { font-size: 10px; color: #00ff88; margin-top: 2px; }
+        .up-divider { height: 1px; background: #142847; margin: 4px 0; }
+        .up-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+        .up-cost { font-weight: bold; color: #00ffff; }
+        .up-lvl { color: #52637a; font-size: 10px; }
+
+        /* --- TASKS STYLES --- */
+        .task-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .task-card { background: #091324; border: 1px solid #142847; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .task-info { display: flex; flex-direction: column; gap: 4px; }
+        .task-title { font-size: 13px; font-weight: bold; color: #ffffff; }
+        .task-reward { font-size: 11px; color: #00ffff; font-weight: 600; }
+        .task-btn { background: #0055ff; border: none; color: white; padding: 6px 14px; border-radius: 15px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .task-btn.completed { background: rgba(0, 255, 136, 0.2); color: #00ff88; pointer-events: none; }
+
+        /* --- FRIENDS TAB STYLES --- */
+        .invite-box { background: linear-gradient(135deg, #091d3a 0%, #051021 100%); border: 1px solid #1a3c6d; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .invite-title { font-size: 18px; font-weight: bold; color: #ffffff; margin-bottom: 6px; }
+        .invite-desc { font-size: 12px; color: #8fa0b5; margin-bottom: 15px; line-height: 1.4; }
+        .share-link-btn { background: #00ffff; color: #030812; border: none; padding: 10px 20px; font-size: 13px; font-weight: 800; border-radius: 25px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; box-shadow: 0 0 15px rgba(0,255,255,0.3); }
+        .friends-list-header { font-size: 13px; color: #52637a; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px; }
+
+        /* Dock System Control Menu Footer */
         .system-dock { position: fixed; bottom: 0; left: 0; width: 100%; height: 68px; background: #040914; border-top: 1px solid #10223b; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-        .dock-tab { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #43536b; text-decoration: none; font-size: 9px; font-weight: 700; flex: 1; height: 100%; justify-content: center; }
+        .dock-tab { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #43536b; text-decoration: none; font-size: 9px; font-weight: 700; flex: 1; height: 100%; justify-content: center; cursor: pointer; }
         .dock-tab.active { color: #00ffff; }
-        .dock-icon { font-size: 22px; }
+        .dock-icon { font-size: 20px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
+    <!-- Header Control Area -->
     <div class="header-bar">
-        <div class="user-pill">👤 <span id="playerUsername">NXR User</span></div>
-        <div class="node-status" id="syncIndicator">Local Play</div>
+        <div class="user-pill">👤 <span id="playerUsername">NXR Operator</span></div>
+        <div class="node-status">Local Play</div>
     </div>
 
+    <!-- Token Dashboard Status -->
     <div class="dashboard">
         <div class="brand-title">NXR SYSTEM ENGINE</div>
+        <div class="piph-box">Profit per sec: <span class="piph-val">+<span id="piphCounter">0</span> ✦</span></div>
         <div class="balance-box">
             <span class="token-symbol">✦</span>
             <span class="balance-value" id="coinsCounter">0</span>
         </div>
     </div>
 
-    <div class="interaction-vault">
-        <div class="energy-field-outer">
-            <div class="node-core-btn" id="tapEngineCore">
-                <span class="core-text">NXR</span>
-                <span class="core-subtext">+5 NODE</span>
+    <!-- ================= PANE 1: CORE CORE TAP GAME ================= -->
+    <div id="pane-core" class="game-pane active-pane">
+        <div class="interaction-vault">
+            <div class="energy-field-outer">
+                <!-- FLOATING ENERGY POPUP BADGE -->
+                <div class="energy-popup-badge"><span id="fuelCounter">1500</span>/1500</div>
+                
+                <div class="node-core-btn" id="tapEngineCore">
+                    <span class="core-text">NXR</span>
+                    <span class="core-subtext">+5 NODE</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="capacitance-box">
-        <div class="capacitance-status">
-            <span class="cap-label">Node Fuel</span>
-            <span class="cap-metrics"><span id="fuelCounter">1500</span>/1500</span>
-        </div>
-        <div class="cap-track">
-            <div class="cap-fluid" id="fuelMeterBar"></div>
-        </div>
-    </div>
-
-    <div class="system-dock">
-        <a href="#" class="dock-tab active"><span class="dock-icon">🛸</span>CORE</a>
-        <a href="#" class="dock-tab" onclick="alert('Upgrades coming in next build!')"><span class="dock-icon">⚙️</span>UPGRADE</a>
-        <a href="#" class="dock-tab" onclick="alert('Tasks module coming soon!')"><span class="dock-icon">📜</span>TASKS</a>
-        <a href="#" class="dock-tab" onclick="alert('Alliance network locked!')"><span class="dock-icon">👥</span>ALLIANCE</a>
-    </div>
-
-    <script>
-        let coins = 0;
-        let energy = 1500;
-        const maxEnergy = 1500;
-        const rewardValue = 5;
-
-        const coinsCounter = document.getElementById('coinsCounter');
-        const fuelCounter = document.getElementById('fuelCounter');
-        const fuelMeterBar = document.getElementById('fuelMeterBar');
-        const tapEngineCore = document.getElementById('tapEngineCore');
-
-        function executeNodeTap(x, y) {
-            if (energy >= rewardValue) {
-                coins += rewardValue;
-                energy -= rewardValue;
-                coinsCounter.innerText = coins.toLocaleString();
-                fuelCounter.innerText = energy;
-                fuelMeterBar.style.width = ((energy / maxEnergy) * 100) + '%';
-                renderBurstText(x, y);
-            }
-        }
-
-        if (tapEngineCore) {
-            tapEngineCore.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.touches.length; i++) {
-                    executeNodeTap(e.touches[i].clientX, e.touches[i].clientY);
-                }
-            });
-            tapEngineCore.addEventListener('click', (e) => {
-                if (e.pointerType !== 'touch') {
-                    executeNodeTap(e.clientX, e.clientY);
-                }
-            });
-        }
-
-        function renderBurstText(x, y) {
-            const el = document.createElement('div');
-            el.className = 'click-burst';
-            el.innerText = '+' + rewardValue;
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 500);
-        }
-
-        setInterval(() => {
-            if (energy < maxEnergy) {
-                energy = Math.min(maxEnergy, energy + 3);
-                fuelCounter.innerText = energy;
-                fuelMeterBar.style.width = ((energy / maxEnergy) * 100) + '%';
-            }
-        }, 1000);
-    </script>
-</body>
-</html>
+    <!-- ================= PANE 2: UPGRADES MINING MARKET ================= -->
+    <div id="pane-upgrade" class="game-pane">
+        <div class="section-header">Quantum Node Mining Modules</div>
+        <div class="upgrades-grid">
+            <div class="up-card" onclick="buyUpgrade('cpu')">
+                <div class="up-name">Data Processor v1</div>
+                <div class="up-profit">+1/sec profit</div>
+                <div class="up-divider"></div>
+                <div class="up-footer">
+                    <span class="up-cost"><span id="cost-cpu">50</span> ✦</span>
+                    <span class="up-lvl">Lvl <span id="lvl-cpu">0</span></span>
+                </div>
+            </div>
+            <div class="up-card" onclick="buyUpgrade('quantum')">
+                <div class="up-name">Quantum Core Expansion</div>
+                <div class="up-profit">+5/sec profit</div>
+                <div class="up-divider"></div>
+                <div class="up-footer">
+                    <span class="up-cost"><span id="cost-quantum">250</span> ✦</span>
+                    <span class="up-lvl">Lvl <span id="lvl-quantum">0</span></span>
+                    
